@@ -55,6 +55,8 @@ function INIT_JS()
     function L(label, ...args)
     {
       let str = LOCALIZATION_DICT[label];
+      if (str === undefined)
+        return label;
       for (const arg of args)
         str = str.replace('%s', arg);
       return str;
