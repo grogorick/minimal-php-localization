@@ -1,54 +1,75 @@
 <?php namespace LOCALIZATION;
 
-$LOCALIZATION_LOCALE = null;
+class Localization
+{
+  public static $LOCALE_FULL = null;
+  public static $LOCALE = null;
+
+  public static $DICT = null;
+  public static $DICT_LOCALES = null;
+}
 
 function INIT_FROM_FILE($file)
 {
-  if (defined('LOCALIZATION_DICT')) {
-    trigger_error('Localization already initialized');
-    return;
-  }
-  $dict = [];
+  Localization::$DICT = [];
+  $locales = [];
   $current = [];
   foreach (file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES) as &$line) {
-    $lineLOCALIZATION = trim($line);
-    if ($lineLOCALIZATION == '' || $lineLOCALIZATION[0] == '#')
+    $line_t = trim($line);
+    if ($line_t == '' || $line_t[0] == '#')
       continue;
     if ($line[0] != ' ') {
-      $dict[substr($lineLOCALIZATION, 0, -1)] = [];
-      $current = &$dict[array_key_last($dict)];
+      Localization::$DICT[substr($line_t, 0, -1)] = [];
+      $current = &Localization::$DICT[array_key_last(Localization::$DICT)];
     }
     else {
-      [$lang, $text] = explode(': ', substr($line, 1), 2);
-      $current[$lang] = substr($text, 1, -1);
+      [$locale, $text] = explode(': ', substr($line, 1), 2);
+      $current[$locale] = substr($text, 1, -1);
+      $locales[] = $locale;
     }
   }
-  define('LOCALIZATION_DICT', $dict);
+  Localization::$DICT_LOCALES = array_unique($locales);
 }
 
 function SET_LOCALE($locale)
 {
-  global $LOCALIZATION_LOCALE;
-  if (!in_array($locale, array_keys(current(LOCALIZATION_DICT))))
-    trigger_error('Locale `' . $locale . '` not found');
-  else
-    $LOCALIZATION_LOCALE = $locale;
+  $locales = [$loc = $locale];
+  $p = strpos($loc, '.');
+  if ($p !== false) {
+    $locales[] = $loc = substr($loc, 0, $p);
+  }
+  $p = strpos($loc, '-');
+  if ($p !== false) {
+    $locales[] = $loc = substr($loc, 0, $p);
+  }
+
+  foreach ($locales as $loc)
+    if (in_array($loc, Localization::$DICT_LOCALES)) {
+      Localization::$LOCALE = $loc;
+      Localization::$LOCALE_FULL = $locale;
+      return;
+    }
+  trigger_error('Locale `' . $loc . '` not found');
+}
+
+function GET_LOCALE()
+{
+  return Localization::$LOCALE_FULL;
 }
 
 function INIT_JS()
 {
-  if (!defined('LOCALIZATION_DICT')) {
+  if (is_null(Localization::$DICT)) {
     trigger_error('Localization not initialized');
     return;
   }
-  global $LOCALIZATION_LOCALE;
-  if (is_null($LOCALIZATION_LOCALE)) {
+  if (is_null(Localization::$LOCALE)) {
     trigger_error('Locale not set');
     return;
   }
 ?><script>
     let LOCALIZATION_DICT = {<?php
-      $dict = array_map(fn($item) => $item[$LOCALIZATION_LOCALE], LOCALIZATION_DICT);
+      $dict = array_map(fn($item) => $item[Localization::$LOCALE], Localization::$DICT);
       array_walk($dict, function(&$val, $key) { $val = $key . ': "' . $val .'"'; });
       echo implode(', ', $dict);
       ?>};
@@ -67,8 +88,7 @@ function INIT_JS()
 
 function L($label, ...$args)
 {
-  global $LOCALIZATION_LOCALE;
   if (count($args))
-    return sprintf(LOCALIZATION_DICT[$label][$LOCALIZATION_LOCALE], ...$args);
-  return LOCALIZATION_DICT[$label][$LOCALIZATION_LOCALE];
+    return sprintf(Localization::$DICT[$label][Localization::$LOCALE], ...$args);
+  return Localization::$DICT[$label][Localization::$LOCALE];
 }
