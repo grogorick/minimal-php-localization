@@ -34,8 +34,17 @@ function INIT_FROM_FILE($file)
   Localization::$DICT_LOCALES = array_unique($locales);
 }
 
-function SET_LOCALE($locale, $default = 'en-US')
+function SET_LOCALE($locale = null, $fallback = 'en-US')
 {
+  if (empty($locale)) {
+    if (!empty($fallback)) {
+      $locale = $fallback;
+      $fallback = null;
+    }
+    else
+      throw new \Exception('Cannot set an empty locale');
+  }
+
   $locales = [$loc = $locale];
   $p = strpos($loc, '.');
   if ($p !== false)
@@ -50,8 +59,8 @@ function SET_LOCALE($locale, $default = 'en-US')
       $new_locale[] = $loc;
 
   if (empty($new_locale)) {
-    if (!is_null($default))
-      SET_LOCALE($default, null);
+    if (!empty($fallback))
+      SET_LOCALE($fallback, null);
     else
       throw new \Exception('Locale `' . $loc . '` not found');
   }
