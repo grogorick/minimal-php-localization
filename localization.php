@@ -86,6 +86,7 @@ function INIT_JS()
     return;
   }
 ?><script>
+    let LOCALE = '<?=GET_LOCALE()?>';
     let LOCALIZATION_DICT = {<?php
       $dict = [];
       array_walk(Localization::$DICT, function(&$item, $label) use (&$dict)
