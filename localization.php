@@ -3,7 +3,7 @@
 class Localization
 {
   public static $LOCALE_FULL = null;
-  public static $LOCALE = null;
+  public static $LOCALE = [];
 
   public static $DICT = null;
   public static $DICT_LOCALES = null;
@@ -11,6 +11,9 @@ class Localization
 
 function INIT_FROM_FILE($file)
 {
+  if (!file_exists($file))
+    throw new \Exception('Localization file `' . $file . '` not found');
+
   Localization::$DICT = [];
   $locales = [];
   $current = [];
@@ -31,25 +34,31 @@ function INIT_FROM_FILE($file)
   Localization::$DICT_LOCALES = array_unique($locales);
 }
 
-function SET_LOCALE($locale)
+function SET_LOCALE($locale, $default = 'en-US')
 {
   $locales = [$loc = $locale];
   $p = strpos($loc, '.');
-  if ($p !== false) {
+  if ($p !== false)
     $locales[] = $loc = substr($loc, 0, $p);
-  }
   $p = strpos($loc, '-');
-  if ($p !== false) {
+  if ($p !== false)
     $locales[] = $loc = substr($loc, 0, $p);
-  }
 
-  foreach ($locales as $loc)
-    if (in_array($loc, Localization::$DICT_LOCALES)) {
-      Localization::$LOCALE = $loc;
-      Localization::$LOCALE_FULL = $locale;
-      return;
-    }
-  trigger_error('Locale `' . $loc . '` not found');
+  $new_locale = [];
+  foreach ($locales as &$loc)
+    if (in_array($loc, Localization::$DICT_LOCALES))
+      $new_locale[] = $loc;
+
+  if (empty($new_locale)) {
+    if (!is_null($default))
+      SET_LOCALE($default, null);
+    else
+      throw new \Exception('Locale `' . $loc . '` not found');
+  }
+  else {
+    Localization::$LOCALE_FULL = $locale;
+    Localization::$LOCALE = $new_locale;
+  }
 }
 
 function GET_LOCALE()
@@ -60,17 +69,20 @@ function GET_LOCALE()
 function INIT_JS()
 {
   if (is_null(Localization::$DICT)) {
-    trigger_error('Localization not initialized');
+    throw new \Exception('Localization file not loaded');
     return;
   }
-  if (is_null(Localization::$LOCALE)) {
-    trigger_error('Locale not set');
+  if (empty(Localization::$LOCALE)) {
+    throw new \Exception('Locale not set');
     return;
   }
 ?><script>
     let LOCALIZATION_DICT = {<?php
-      $dict = array_map(fn($item) => $item[Localization::$LOCALE], Localization::$DICT);
-      array_walk($dict, function(&$val, $key) { $val = $key . ': "' . $val .'"'; });
+      $dict = [];
+      array_walk(Localization::$DICT, function(&$item, $label) use (&$dict)
+      {
+        $dict[] = $label . ': "' . _find_in($item, $label) .'"';
+      });
       echo implode(', ', $dict);
       ?>};
     function L(label, ...args)
@@ -86,9 +98,23 @@ function INIT_JS()
 <?php
 }
 
+function _find_in(&$item, &$label)
+{
+  if (is_null($item))
+    return $label;
+
+  foreach (Localization::$LOCALE as &$locale) {
+    foreach (array_keys($item) as &$item_locale)
+      if (str_starts_with($item_locale, $locale))
+        return $item[$item_locale];
+  }
+  return $item[array_key_first($item)];
+}
+
 function L($label, ...$args)
 {
+  $str = _find_in(Localization::$DICT[$label], $label);
   if (count($args))
-    return sprintf(Localization::$DICT[$label][Localization::$LOCALE], ...$args);
-  return Localization::$DICT[$label][Localization::$LOCALE];
+    return sprintf($str, ...$args);
+  return $str;
 }
