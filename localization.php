@@ -17,7 +17,7 @@ function INIT_FROM_FILE($file)
   Localization::$DICT = [];
   $locales = [];
   $current = [];
-  foreach (file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES) as &$line) {
+  foreach (file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES) as $line) {
     $line_t = trim($line);
     if ($line_t == '' || $line_t[0] == '#')
       continue;
@@ -54,7 +54,7 @@ function SET_LOCALE($locale = null, $fallback = 'en-US')
     $locales[] = $loc = substr($loc, 0, $p);
 
   $new_locale = [];
-  foreach ($locales as &$loc)
+  foreach ($locales as $loc)
     if (in_array($loc, Localization::$DICT_LOCALES))
       $new_locale[] = $loc;
 
@@ -108,13 +108,13 @@ function INIT_JS()
 <?php
 }
 
-function _find_in(&$item, &$label)
+function _find_in($item, $label)
 {
   if (is_null($item))
     return $label;
 
-  foreach (Localization::$LOCALE as &$locale) {
-    foreach (array_keys($item) as &$item_locale)
+  foreach (Localization::$LOCALE as $locale) {
+    foreach (array_keys($item) as $item_locale)
       if (str_starts_with($item_locale, $locale))
         return $item[$item_locale];
   }
