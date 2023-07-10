@@ -28,12 +28,12 @@ progress:
 <?php
 require('localization/localization.php');
 LOCALIZATION\INIT_FROM_FILE('localization.yaml');
-LOCALIZATION\SET_LOCALE($_GET['lang'] ?? null);
+LOCALIZATION\SET_LOCALE(@$_GET['lang']);
 use function LOCALIZATION\L;
 ?>
 ```
 - load localization dictionary from file
-- set locale, e.g., from URL parameter
+- set locale from URL parameter, or try to get it from browser (header), or use default (en-US) otherwise
 - make localization function `L()` available in PHP
 
 **JS**

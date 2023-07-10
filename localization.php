@@ -37,21 +37,26 @@ function INIT_FROM_FILE($file)
 function SET_LOCALE($locale = null, $fallback = 'en-US')
 {
   if (empty($locale)) {
-    if (!empty($fallback)) {
-      $locale = $fallback;
-      $fallback = null;
+    $locale = locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+    if (empty($locale)) {
+      if (!empty($fallback)) {
+        $locale = $fallback;
+        $fallback = null;
+      }
+      else
+        throw new \Exception('Cannot set an empty locale');
     }
-    else
-      throw new \Exception('Cannot set an empty locale');
   }
+  $locale = str_replace(['_', '.'], '-', $locale);
 
   $locales = [$loc = $locale];
-  $p = strpos($loc, '.');
-  if ($p !== false)
-    $locales[] = $loc = substr($loc, 0, $p);
-  $p = strpos($loc, '-');
-  if ($p !== false)
-    $locales[] = $loc = substr($loc, 0, $p);
+  while (true) {
+    $p = strrpos($loc, '-');
+    if ($p !== false)
+      $locales[] = $loc = substr($loc, 0, $p);
+    else
+      break;
+  }
 
   $new_locale = [];
   foreach ($locales as $loc)
