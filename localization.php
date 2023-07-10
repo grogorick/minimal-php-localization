@@ -120,7 +120,7 @@ function _find_in($item, $label)
 
   foreach (Localization::$LOCALE as $locale) {
     foreach (array_keys($item) as $item_locale)
-      if (str_starts_with($item_locale, $locale))
+      if (substr($item_locale, 0, strlen($locale)) === $locale)
         return $item[$item_locale];
   }
   return $item[array_key_first($item)];
