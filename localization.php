@@ -47,9 +47,9 @@ function SET_LOCALE($locale = null, $fallback = 'en-US')
         throw new \Exception('Cannot set an empty locale');
     }
   }
-  $locale = str_replace(['_', '.'], '-', $locale);
 
-  $locales = [$loc = $locale];
+  $loc = str_replace(['_', '.'], '-', $locale);
+  $locales = [$loc];
   while (true) {
     $p = strrpos($loc, '-');
     if ($p !== false)
