@@ -128,6 +128,9 @@ function _find_in($item, $label)
 
 function L($label, ...$args)
 {
+  if (!array_key_exists($label, Localization::$DICT))
+    return $label;
+
   $str = _find_in(Localization::$DICT[$label], $label);
   if (count($args))
     return sprintf($str, ...$args);
