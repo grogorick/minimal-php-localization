@@ -37,7 +37,7 @@ function INIT_FROM_FILE($file)
 function SET_LOCALE($locale = null, $fallback = 'en-US')
 {
   if (empty($locale)) {
-    $locale = locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+    $locale = locale_accept_from_http(@$_SERVER['HTTP_ACCEPT_LANGUAGE']);
     if (empty($locale)) {
       if (!empty($fallback)) {
         $locale = $fallback;
