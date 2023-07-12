@@ -17,18 +17,41 @@ function INIT_FROM_FILE($file)
   Localization::$DICT = [];
   $locales = [];
   $current = [];
-  foreach (file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES) as $line) {
+  $multiline = false;
+  foreach (file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES) as $no => $line) {
     $line_t = trim($line);
-    if ($line_t == '' || $line_t[0] == '#')
+    if (empty($line_t) || $line_t[0] === '#')
       continue;
-    if ($line[0] != ' ') {
-      Localization::$DICT[substr($line_t, 0, -1)] = [];
-      $current = &Localization::$DICT[array_key_last(Localization::$DICT)];
+    $indent = '' !== preg_replace('/^(\s*)\S.*$/', '\1', $line);
+    $line_end = substr($line_t, -1);
+    if (!$multiline) {
+      if (!$indent && $line_end === ':') {
+        $label = trim(substr($line_t, 0, -1));
+        Localization::$DICT[$label] = [];
+        $current = &Localization::$DICT[$label];
+      }
+      else if ($indent) {
+        [$locale, $text] = explode(':', $line_t, 2);
+        $locale = rtrim($locale);
+        $text = ltrim($text);
+        if ($line_end === '"')
+          $current[$locale] = substr($text, 1, -1);
+        else {
+          $current[$locale] = substr($text, 1);
+          $multiline = true;
+        }
+        $locales[] = $locale;
+      }
+      else
+        throw new \Exception('Syntax error in localization file `' . $file . '` in line ' . $no);
     }
     else {
-      [$locale, $text] = explode(': ', substr($line, 1), 2);
-      $current[$locale] = substr($text, 1, -1);
-      $locales[] = $locale;
+      if ($line_end !== '"')
+        $current[$locale] .= "\n" . $line_t;
+      else {
+        $current[$locale] .= "\n" . rtrim(substr($line_t, 0, -1));
+        $multiline = false;
+      }
     }
   }
   Localization::$DICT_LOCALES = array_unique($locales);
