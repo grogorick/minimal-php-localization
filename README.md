@@ -20,6 +20,12 @@ points:
 progress:
  en: "Step %s of %s"
  de: "Schritt %s von %s"
+
+help:
+ en: "This is a rather long help text
+      that spans multiple lines."
+ de: "Das ist ein längerer Hilfetext
+      der über mehrere Zeilen geht."
 ```
 
 ## Initialization
