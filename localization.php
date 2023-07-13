@@ -103,7 +103,7 @@ function GET_LOCALE()
   return Localization::$LOCALE_FULL;
 }
 
-function INIT_JS()
+function INIT_JS($func_name = 'L')
 {
   if (is_null(Localization::$DICT)) {
     throw new \Exception('Localization file not loaded');
@@ -123,7 +123,7 @@ function INIT_JS()
       });
       echo implode(', ', $dict);
       ?>};
-    function L(label, ...args)
+    function <?=$func_name?>(label, ...args)
     {
       let str = LOCALIZATION_DICT[label];
       if (str === undefined)
