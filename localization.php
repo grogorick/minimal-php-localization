@@ -98,21 +98,25 @@ function SET_LOCALE($locale = null, $fallback = 'en-US')
   }
 }
 
-function GET_LOCALE()
+function GET_LOCALE($num_parts = -1)
 {
-  return Localization::$LOCALE_FULL;
+  if (empty(Localization::$LOCALE))
+    throw new \Exception('Locale not set');
+
+  if ($num_parts === -1)
+    return Localization::$LOCALE_FULL;
+  if ($num_parts === 0)
+    return Localization::$LOCALE[0];
+  return array_slice(Localization::$LOCALE, 0, $num_parts);
 }
 
 function INIT_JS($func_name = 'L')
 {
-  if (is_null(Localization::$DICT)) {
+  if (is_null(Localization::$DICT))
     throw new \Exception('Localization file not loaded');
-    return;
-  }
-  if (empty(Localization::$LOCALE)) {
+  if (empty(Localization::$LOCALE))
     throw new \Exception('Locale not set');
-    return;
-  }
+
 ?><script>
     let LOCALE = '<?=GET_LOCALE()?>';
     let LOCALIZATION_DICT = {<?php
