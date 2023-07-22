@@ -17,14 +17,14 @@ function INIT_FROM_FILE($file)
   Localization::$DICT = [];
   $locales = [];
   $current = [];
-  $multiline = false;
+  $multiline_locale = null;
   foreach (file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES) as $no => $line) {
     $line_t = trim($line);
     if (empty($line_t) || $line_t[0] === '#')
       continue;
     $indent = '' !== preg_replace('/^(\s*)\S.*$/', '\1', $line);
     $line_end = substr($line_t, -1);
-    if (!$multiline) {
+    if (is_null($multiline_locale)) {
       if (!$indent && $line_end === ':') {
         $label = trim(substr($line_t, 0, -1));
         Localization::$DICT[$label] = [];
@@ -38,7 +38,7 @@ function INIT_FROM_FILE($file)
           $current[$locale] = substr($text, 1, -1);
         else {
           $current[$locale] = substr($text, 1);
-          $multiline = true;
+          $multiline_locale = $locale;
         }
         $locales[] = $locale;
       }
@@ -47,10 +47,10 @@ function INIT_FROM_FILE($file)
     }
     else {
       if ($line_end !== '"')
-        $current[$locale] .= "\n" . $line_t;
+        $current[$multiline_locale] .= "\n" . $line_t;
       else {
-        $current[$locale] .= "\n" . rtrim(substr($line_t, 0, -1));
-        $multiline = false;
+        $current[$multiline_locale] .= "\n" . rtrim(substr($line_t, 0, -1));
+        $multiline_locale = null;
       }
     }
   }
