@@ -60,7 +60,14 @@ function INIT_FROM_FILE($file)
 function SET_LOCALE($locale = null, $fallback = 'en-US')
 {
   if (empty($locale)) {
-    $locale = locale_accept_from_http(@$_SERVER['HTTP_ACCEPT_LANGUAGE']);
+    $locale = null;
+    $header_lang = $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? null;
+    if (!empty($header_lang)) {
+      if (function_exists('locale_accept_from_http'))
+        $locale = locale_accept_from_http($header_lang);
+      else
+        $locale = explode(',', $header_lang)[0];
+    }
     if (empty($locale)) {
       if (!empty($fallback)) {
         $locale = $fallback;
